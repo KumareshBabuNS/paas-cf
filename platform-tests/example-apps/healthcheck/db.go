@@ -7,13 +7,15 @@ import (
 	"net/url"
 	"os"
 
+	_ "github.com/go-sql-driver/mysql"
 	_ "github.com/lib/pq"
 )
 
 func dbHandler(w http.ResponseWriter, r *http.Request) {
 	ssl := r.FormValue("ssl") != "false"
+	service := r.FormValue("service")
 
-	err := testDBConnection(ssl)
+	err := testDBConnection(ssl, service)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -24,18 +26,50 @@ func dbHandler(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-func testDBConnection(ssl bool) error {
-	dbURL, err := url.Parse(os.Getenv("DATABASE_URL"))
+func testDBConnection(ssl bool, service string) error {
+	var sslTrigger string
+	var sslOn string
+	var sslOff string
+
+	if service == "" {
+		service = "postgres"
+	}
+
+	dbu := os.Getenv("DATABASE_URL")
+
+	switch service {
+	case "mysql":
+		sslTrigger = "useSSL"
+		sslOn = "true"
+		sslOff = "false"
+		err := adaptMySQLURL(&dbu)
+		if err != nil {
+			return err
+		}
+	case "postgres":
+		sslTrigger = "sslmode"
+		sslOn = "verify-full"
+		sslOff = "disable"
+	default:
+		return fmt.Errorf("unknown service: " + service)
+	}
+
+	dbURL, err := url.Parse(dbu)
 	if err != nil {
 		return err
 	}
+
+	values := dbURL.Query()
+
 	if ssl {
-		dbURL.RawQuery = dbURL.RawQuery + "&sslmode=verify-full"
+		values.Set(sslTrigger, sslOn)
 	} else {
-		dbURL.RawQuery = dbURL.RawQuery + "&sslmode=disable"
+		values.Set(sslTrigger, sslOff)
 	}
 
-	db, err := sql.Open("postgres", dbURL.String())
+	dbURL.RawQuery = values.Encode()
+
+	db, err := sql.Open(service, dbURL.String())
 	if err != nil {
 		return err
 	}
@@ -62,6 +96,17 @@ func testDBConnection(ssl bool) error {
 	if id != 42 {
 		return fmt.Errorf("Expected 42, got %d", id)
 	}
+
+	return nil
+}
+
+func adaptMySQLURL(dbu *string) error {
+	u, err := url.Parse(*dbu)
+	if err != nil {
+		return err
+	}
+
+	*dbu = fmt.Sprintf("%s@tcp(%s:%s)%s?%s", u.User.String(), u.Hostname(), u.Port(), u.EscapedPath(), u.Query().Encode())
 
 	return nil
 }
