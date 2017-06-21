@@ -130,8 +130,8 @@ var _ = Describe("RDS broker - MySQL", func() {
 	})
 
 	Context("creating a database instance", func() {
-		// Avoid creating additional tests in this block because this setup and teardown is
-		// slow (several minutes).
+		// Avoid creating additional tests in this block because this setup and
+		// teardown is slow (several minutes).
 
 		var (
 			appName         string

@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -10,6 +11,18 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 	_ "github.com/lib/pq"
 )
+
+type MySQL struct {
+	Host string `json:"host"`
+	Port string `json:"port"`
+	Name string `json:"name"`
+	User string `json:"username"`
+	Pass string `json:"password"`
+}
+
+type services struct {
+	MySQL []MySQL `json:"mysql"`
+}
 
 func dbHandler(w http.ResponseWriter, r *http.Request) {
 	ssl := r.FormValue("ssl") != "false"
@@ -39,8 +52,8 @@ func testDBConnection(ssl bool, service string) error {
 
 	switch service {
 	case "mysql":
-		sslTrigger = "useSSL"
-		sslOn = "true"
+		sslTrigger = "tls"
+		sslOn = "skip-verify"
 		sslOff = "false"
 		err := adaptMySQLURL(&dbu)
 		if err != nil {
@@ -51,7 +64,7 @@ func testDBConnection(ssl bool, service string) error {
 		sslOn = "verify-full"
 		sslOff = "disable"
 	default:
-		return fmt.Errorf("unknown service: " + service)
+		return fmt.Errorf("unknown service: %s", service)
 	}
 
 	dbURL, err := url.Parse(dbu)
@@ -101,12 +114,13 @@ func testDBConnection(ssl bool, service string) error {
 }
 
 func adaptMySQLURL(dbu *string) error {
-	u, err := url.Parse(*dbu)
+	var s = services{}
+	err := json.Unmarshal([]byte(os.Getenv("DATABASE_URL")), &s)
 	if err != nil {
 		return err
 	}
 
-	*dbu = fmt.Sprintf("%s@tcp(%s:%s)%s?%s", u.User.String(), u.Hostname(), u.Port(), u.EscapedPath(), u.Query().Encode())
+	*dbu = fmt.Sprintf("%s:%s@tcp(%s:%s)%s", s.MySQL[0].User, s.MySQL[0].Pass, s.MySQL[0].Host, s.MySQL[0].Port, s.MySQL[0].Name)
 
 	return nil
 }
