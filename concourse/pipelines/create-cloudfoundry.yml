@@ -125,6 +125,13 @@ resources:
       region_name: {{aws_region}}
       versioned_file: bosh-CA.tar.gz
 
+  - name: netman-CA
+    type: s3-iam
+    source:
+      bucket: {{state_bucket}}
+      region_name: {{aws_region}}
+      versioned_file: netman-CA.tar.gz
+
   - name: ipsec-CA
     type: s3-iam
     source:
@@ -181,6 +188,13 @@ resources:
       bucket: {{state_bucket}}
       region_name: {{aws_region}}
       versioned_file: cf-certs.tar.gz
+
+  - name: netman-certs
+    type: s3-iam
+    source:
+      bucket: {{state_bucket}}
+      region_name: {{aws_region}}
+      versioned_file: netman-certs.tar.gz
 
   - name: cf-certs-tfstate
     type: s3-iam
@@ -376,10 +390,12 @@ jobs:
               - -c
               - |
                 paas-cf/concourse/scripts/s3init.sh {{state_bucket}} ipsec-CA.tar.gz paas-cf/concourse/init_files/empty.tar.gz
+                paas-cf/concourse/scripts/s3init.sh {{state_bucket}} netman-CA.tar.gz paas-cf/concourse/init_files/empty.tar.gz
                 paas-cf/concourse/scripts/s3init.sh {{state_bucket}} cf-secrets.yml paas-cf/concourse/init_files/zero_bytes
                 paas-cf/concourse/scripts/s3init.sh {{state_bucket}} google-oauth-secrets.yml paas-cf/concourse/init_files/zero_bytes
                 paas-cf/concourse/scripts/s3init.sh {{state_bucket}} cf.tfstate paas-cf/concourse/init_files/terraform.tfstate.tpl
                 paas-cf/concourse/scripts/s3init.sh {{state_bucket}} cf-certs.tar.gz paas-cf/concourse/init_files/empty.tar.gz
+                paas-cf/concourse/scripts/s3init.sh {{state_bucket}} netman-certs.tar.gz paas-cf/concourse/init_files/empty.tar.gz
                 paas-cf/concourse/scripts/s3init.sh {{state_bucket}} cf-certs.tfstate paas-cf/concourse/init_files/terraform.tfstate.tpl
                 paas-cf/concourse/scripts/s3init.sh {{state_bucket}} datadog.tfstate paas-cf/concourse/init_files/terraform.tfstate.tpl
                 paas-cf/concourse/scripts/s3init.sh {{state_bucket}} git-keys.tar.gz paas-cf/concourse/init_files/empty.tar.gz
@@ -399,7 +415,9 @@ jobs:
             trigger: true
           - get: bosh-CA
           - get: ipsec-CA
+          - get: netman-CA
           - get: cf-certs
+          - get: netman-certs
           - get: cf-secrets
           - get: ssh-private-key
           - get: ssh-public-key
@@ -555,6 +573,40 @@ jobs:
             put: cf-certs
             params:
               file: generated-cf-certs/cf-certs.tar.gz
+
+        - task: generate-netman-certs
+          config:
+            platform: linux
+            image_resource:
+              type: docker-image
+              source:
+                repository: governmentpaas/certstrap
+                tag: 895cf6752c8ec64af05a3a735186b90acd3db65a
+            inputs:
+              - name: netman-CA
+              - name: paas-cf
+              - name: netman-certs
+            outputs:
+              - name: generated-netman-certs
+            run:
+              path: sh
+              args:
+                - -e
+                - -c
+                - |
+                  mkdir certs
+                  echo "Extracting extant certs"
+                  tar -xvzf netman-certs/netman-certs.tar.gz -C certs
+
+                  ./paas-cf/manifests/cf-manifest/scripts/generate-netman-certs.sh certs netman-CA/netman-CA.tar.gz
+
+                  echo "Creating updated cert tarball"
+                  cd certs
+                  tar -cvzf ../generated-netman-certs/netman-certs.tar.gz .
+          on_success:
+            put: netman-certs
+            params:
+              file: generated-netman-certs/netman-certs.tar.gz
 
         - task: generate-cf-secrets
           config:
@@ -926,9 +978,11 @@ jobs:
             passed: ['cf-terraform']
           - get: bosh-CA
           - get: ipsec-CA
+          - get: netman-CA
           - get: cf-secrets
             passed: ['cf-terraform']
           - get: cf-certs
+          - get: netman-certs
           - get: vpc-tfstate
           - get: concourse-tfstate
           - get: bosh-tfstate
@@ -1060,8 +1114,10 @@ jobs:
               - name: terraform-outputs
               - name: cf-secrets
               - name: cf-certs
+              - name: netman-certs
               - name: bosh-CA
               - name: ipsec-CA
+              - name: netman-CA
               - name: grafana-dashboards-manifest
               - name: vpc-peering-manifest
             outputs:
@@ -1094,7 +1150,9 @@ jobs:
                   echo "Extracting extant certs"
                   tar -xvzf bosh-CA/bosh-CA.tar.gz -C certs
                   tar -xvzf ipsec-CA/ipsec-CA.tar.gz -C certs
+                  tar -xvzf netman-CA/netman-CA.tar.gz -C certs
                   tar -xvzf cf-certs/cf-certs.tar.gz -C certs
+                  tar -xvzf netman-certs/netman-certs.tar.gz -C certs
 
                   cd certs
                   for file in *.crt; do
