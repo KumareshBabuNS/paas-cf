@@ -7,6 +7,7 @@ api_pass=${TF_VAR_secrets_cf_db_api_password:?}
 uaa_pass=${TF_VAR_secrets_cf_db_uaa_password:?}
 bbs_pass=${TF_VAR_secrets_cf_db_bbs_password:?}
 silk_pass=${TF_VAR_secrets_cf_db_silk_password:?}
+policy_server_pass=${TF_VAR_secrets_cf_db_policy_server_password:?}
 db_address=${TF_VAR_cf_db_address:?}
 
 # See: https://github.com/koalaman/shellcheck/wiki/SC2086#exceptions
@@ -26,13 +27,17 @@ psql_adm -d postgres -c "SELECT rolname FROM pg_roles WHERE rolname = 'bbs'" \
 psql_adm -d postgres -c "SELECT rolname FROM pg_roles WHERE rolname = 'silk'" \
   | grep -q 'silk' || psql_adm -d postgres -c "CREATE USER silk WITH ROLE dbadmin"
 
+psql_adm -d postgres -c "SELECT rolname FROM pg_roles WHERE rolname = 'policy_server'" \
+  | grep -q 'policy_server' || psql_adm -d postgres -c "CREATE USER policy_server WITH ROLE dbadmin"
+
 # Always update passwords
 psql_adm -d postgres -c "ALTER USER api WITH PASSWORD '${api_pass}'"
 psql_adm -d postgres -c "ALTER USER uaa WITH PASSWORD '${uaa_pass}'"
 psql_adm -d postgres -c "ALTER USER bbs WITH PASSWORD '${bbs_pass}'"
 psql_adm -d postgres -c "ALTER USER silk WITH PASSWORD '${silk_pass}'"
+psql_adm -d postgres -c "ALTER USER policy_server WITH PASSWORD '${policy_server_pass}'"
 
-for db in api uaa bbs silk; do
+for db in api uaa bbs silk policy_server; do
 
   # Create database
   psql_adm -d postgres -l | grep -q " ${db} " || \
