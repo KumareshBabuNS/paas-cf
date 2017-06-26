@@ -1,0 +1,94 @@
+---
+releases:
+- name: cf-networking
+  version: "1.1.0"
+  url: https://bosh.io/d/github.com/cloudfoundry-incubator/cf-networking-release?v=1.1.0
+  sha1: 2e3e25e3b1988afd6f7d2c20723ba54caa165b25
+
+properties:
+  cf_networking:
+    cni_config_dir: /var/vcap/jobs/silk-cni/config/cni
+    silk_controller:
+      database:
+        type: postgres
+        username: silk
+        password: (( grab secrets.cf_db_silk_password ))
+        host: (( grab terraform_outputs.cf_db_address ))
+        port: 5432
+        name: silk
+      ca_cert: (( grab secrets.netman_ca_cert ))
+      server_cert: (( grab secrets.silk_controller_cert ))
+      server_key: (( grab secrets.silk_controller_key ))
+    silk_daemon:
+      ca_cert: (( grab secrets.netman_ca_cert ))
+      client_cert: (( grab secrets.silk_daemon_client_cert ))
+      client_key: (( grab secrets.silk_daemon_client_key ))
+    vxlan_policy_agent:
+      policy_server_url: https://policy-server.service.cf.internal:4003
+      ca_cert: (( grab secrets.netman_ca_cert ))
+      client_cert: (( grab secrets.vxlan_client_cert ))
+      client_key: (( grab secrets.vxlan_client_key ))
+    policy_server:
+      uaa_client_secret: (( grab secrets.policy_server_uaa_client_secret ))
+      uaa_ca: (( grab secrets.bosh_ca_cert ))
+      uaa_port: 8080
+      database:
+        type: postgres
+        username: policy_server
+        password: (( grab secrets.cf_db_policy_server_password ))
+        host: (( grab terraform_outputs.cf_db_address ))
+        port: 5432
+        name: policy_server
+      ca_cert: (( grab secrets.netman_ca_cert ))
+      server_cert: (( grab secrets.policy_server_cert ))
+      server_key: (( grab secrets.policy_server_key ))
+
+  garden:
+    network_plugin: /var/vcap/packages/runc-cni/bin/garden-external-networker
+    network_plugin_extra_args:
+    - --configFile=/var/vcap/jobs/garden-cni/config/adapter.json
+
+jobs:
+- name: policy-server
+  instances: 1
+  vm_type: medium
+  stemcell: default
+  azs: [ z1 ]
+  persistent_disk: 256
+  vm_extensions:
+  - cf_rds_client_sg
+  templates:
+  - name: policy-server
+    release: cf-networking
+  - name: route_registrar
+    release: cf
+  - name: consul_agent
+    release: cf
+    consumes: {consul: nil}
+  - name: metron_agent
+    release: cf
+  networks:
+    - name: cf
+      static_ips:
+        - 10.0.16.15
+  properties:
+    nats:
+      machines: (( grab properties.nats.machines ))
+      user: (( grab properties.nats.user ))
+      password: (( grab secrets.nats_password ))
+      port: (( grab properties.nats.port ))
+    metron_agent:
+      zone: z1
+    route_registrar:
+      host: 10.0.16.15
+      routes:
+      - name: policy-server
+        port: 4002
+        registration_interval: 20s
+        uris:
+        - (( concat "api." properties.system_domain "/networking" ))
+    consul:
+      agent:
+        services:
+          policy-server:
+            name: policy-server

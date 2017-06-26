@@ -230,6 +230,8 @@ jobs:
         release: diego
       - name: metron_agent
         release: cf
+      - name: silk-controller
+        release: cf-networking
     instances: 2
     vm_type: medium
     vm_extensions:
@@ -242,6 +244,10 @@ jobs:
     properties:
       bbs:
           url: (( concat "https://" meta.bbs.api_location "/v1/actual_lrp_groups/list" ))
+      consul:
+        agent:
+          services:
+            silk-controller: {}
 
   - name: uaa
     azs: [z1, z2]
@@ -424,6 +430,16 @@ jobs:
         release: ipsec
       - name: datadog-ipsec
         release: datadog-for-cloudfoundry
+      - name: garden-cni
+        release: cf-networking
+      - name: silk-cni
+        release: cf-networking
+      - name: silk-daemon
+        release: cf-networking
+      - name: netmon
+        release: cf-networking
+      - name: vxlan-policy-agent
+        release: cf-networking
     instances: (( grab meta.cell.instances ))
     vm_type: cell
     stemcell: default
