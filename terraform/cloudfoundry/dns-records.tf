@@ -3,7 +3,7 @@ resource "aws_route53_record" "cf_cc" {
   name    = "api.${var.system_dns_zone_name}."
   type    = "CNAME"
   ttl     = "60"
-  records = ["${aws_elb.cf_cc.dns_name}"]
+  records = ["${aws_alb.cf_cc.dns_name}"]
 }
 
 resource "aws_route53_record" "cf_uaa" {

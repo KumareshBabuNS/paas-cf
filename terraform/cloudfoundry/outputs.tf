@@ -58,8 +58,16 @@ output "cf_router_elb_name" {
   value = "${aws_elb.cf_router.name}"
 }
 
-output "cf_cc_elb_name" {
-  value = "${aws_elb.cf_cc.name}"
+output "cf_cc_alb_name" {
+  value = "${aws_alb.cf_cc.name}"
+}
+
+output "policy_server_target_group" {
+  value = "${aws_alb_target_group.policy_server.name}"
+}
+
+output "cloudcontroller_target_group" {
+  value = "${aws_alb_target_group.cloudcontroller.name}"
 }
 
 output "cf_uaa_elb_name" {

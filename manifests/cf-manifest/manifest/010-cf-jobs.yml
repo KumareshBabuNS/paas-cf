@@ -313,7 +313,7 @@ jobs:
       - 64g_ephemeral_disk
       - cf_cc_instance_profile
       - cf_cc_security_groups
-      - cf_cc_elb
+      - cf_cc_alb
     stemcell: default
     networks:
       - name: cf

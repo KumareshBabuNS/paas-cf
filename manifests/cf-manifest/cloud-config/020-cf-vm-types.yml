@@ -43,6 +43,18 @@ vm_types:
       elbs:
         - (( grab terraform_outputs.cf_router_elb_name ))
 
+  - name: policy-server
+    network: (( grab vm_types.small.network ))
+    env: (( grab meta.default_env ))
+    cloud_properties:
+      instance_type: (( grab vm_types.small.cloud_properties.instance_type ))
+      albs:
+        - (( grab terraform_outputs.cf_cc_alb_name ))
+      lb_target_groups:
+        - (( grab terraform_outputs.policy_server_target_group ))
+               
+
+
 # Diego below
 
   - name: cell

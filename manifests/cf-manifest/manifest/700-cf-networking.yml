@@ -51,7 +51,7 @@ properties:
 jobs:
 - name: policy-server
   instances: 1
-  vm_type: medium
+  vm_type: policy-server
   stemcell: default
   azs: [ z1 ]
   persistent_disk: 256

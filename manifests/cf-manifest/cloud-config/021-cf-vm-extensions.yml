@@ -29,10 +29,12 @@ vm_extensions:
         - (( grab terraform_outputs.cf_rds_client_security_group ))
         - (( grab terraform_outputs.cloud_controller_security_group ))
 
-  - name: cf_cc_elb
+  - name: cf_cc_alb
     cloud_properties:
-      elbs:
-        - (( grab terraform_outputs.cf_cc_elb_name ))
+      albs:
+        - (( grab terraform_outputs.cf_cc_alb_name ))
+      lb_target_groups:
+        - (( grab terraform_outputs.cloudcontroller_target_group ))
 
   - name: cf_uaa_elb
     cloud_properties:

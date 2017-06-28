@@ -1,44 +1,72 @@
-resource "aws_elb" "cf_cc" {
+resource "aws_alb" "cf_cc" {
   name                      = "${var.env}-cf-cc"
   subnets                   = ["${split(",", var.infra_subnet_ids)}"]
   idle_timeout              = "${var.elb_idle_timeout}"
-  cross_zone_load_balancing = "true"
 
   security_groups = [
     "${aws_security_group.cf_api_elb.id}",
   ]
+}
 
-  access_logs {
-    bucket        = "${aws_s3_bucket.elb_access_log.id}"
-    bucket_prefix = "cf-cc"
-    interval      = 5
+resource "aws_alb_listener" "cf_cc" {
+  load_balancer_arn = "${aws_alb.cf_cc.arn}"
+  port              = "443"
+  protocol          = "HTTPS"
+  ssl_policy        = "${var.default_elb_security_policy}"
+  certificate_arn   = "${var.system_domain_cert_arn}"
+
+  default_action {
+    target_group_arn = "${aws_alb_target_group.cloudcontroller.arn}"
+    type             = "forward"
+  }
+}
+
+resource "aws_alb_listener_rule" "policy_server" {
+  listener_arn = "${aws_alb_listener.cf_cc.arn}"
+  priority     = 100
+
+  action {
+    type             = "forward"
+    target_group_arn = "${aws_alb_target_group.policy_server.arn}"
   }
 
+  condition {
+    field  = "path-pattern"
+    values = ["/networking/*"]
+  }
+}
+
+resource "aws_alb_target_group" "cloudcontroller" {
+  name     = "cloudcontroller"
+  port     = 9022
+  protocol = "HTTP"
+  vpc_id   = "${var.vpc_id}"
+
   health_check {
-    target              = "HTTP:9022/info"
+    path                = "/info"
+    port                = "9022"
+    protocol            = "HTTP"
     interval            = "${var.health_check_interval}"
     timeout             = "${var.health_check_timeout}"
     healthy_threshold   = "${var.health_check_healthy}"
     unhealthy_threshold = "${var.health_check_unhealthy}"
   }
-
-  listener {
-    instance_port      = 9022
-    instance_protocol  = "http"
-    lb_port            = 443
-    lb_protocol        = "https"
-    ssl_certificate_id = "${var.system_domain_cert_arn}"
-  }
 }
 
-resource "aws_lb_ssl_negotiation_policy" "cf_cc" {
-  name          = "paas-${var.default_elb_security_policy}"
-  load_balancer = "${aws_elb.cf_cc.id}"
-  lb_port       = 443
+resource "aws_alb_target_group" "policy_server" {
+  name     = "policy-server"
+  port     = 4002
+  protocol = "HTTP"
+  vpc_id   = "${var.vpc_id}"
 
-  attribute {
-    name  = "Reference-Security-Policy"
-    value = "${var.default_elb_security_policy}"
+  health_check {
+    path                = "/"
+    port                = "4002"
+    protocol            = "HTTP"
+    interval            = "${var.health_check_interval}"
+    timeout             = "${var.health_check_timeout}"
+    healthy_threshold   = "${var.health_check_healthy}"
+    unhealthy_threshold = "${var.health_check_unhealthy}"
   }
 }
 
