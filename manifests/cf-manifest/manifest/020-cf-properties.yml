@@ -437,10 +437,10 @@ properties:
         authorities: uaa.none
         access-token-validity: 600
         refresh-token-validity: 604800
-        network-policy:
-          authorities: uaa.resource,cloud_controller.admin_read_only
-          authorized-grant-types: client_credentials,refresh_token
-          secret: (( grab secrets.policy_server_uaa_client_secret ))
+      network-policy:
+        authorities: uaa.resource,cloud_controller.admin_read_only
+        authorized-grant-types: client_credentials,refresh_token
+        secret: (( grab secrets.policy_server_uaa_client_secret ))
       notifications:
         authorities: cloud_controller.admin,scim.read
         authorized-grant-types: client_credentials

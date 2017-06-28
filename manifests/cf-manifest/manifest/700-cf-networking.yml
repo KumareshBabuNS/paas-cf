@@ -31,7 +31,7 @@ properties:
     policy_server:
       uaa_client_secret: (( grab secrets.policy_server_uaa_client_secret ))
       uaa_ca: (( grab secrets.bosh_ca_cert ))
-      uaa_port: 8080
+      uaa_port: 8443
       database:
         type: postgres
         username: policy_server
@@ -60,8 +60,6 @@ jobs:
   templates:
   - name: policy-server
     release: cf-networking
-  - name: route_registrar
-    release: cf
   - name: consul_agent
     release: cf
     consumes: {consul: nil}

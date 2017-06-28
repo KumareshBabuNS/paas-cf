@@ -1064,7 +1064,7 @@ jobs:
                   cd certs
                   for file in *.crt; do
                     cn=${file%.crt}
-                    yaml_key_name=$(echo ${cn} | tr A-Z- a-z_ | tr - _)
+                    yaml_key_name=$(echo ${cn} | tr A-Z- a-z_)
 
                     echo "Converting ${cn} certs to YAML"
                     ../paas-cf/concourse/scripts/file_to_yaml.sh secrets ${yaml_key_name}_key ${cn}.key > ${cn}_key.yml
