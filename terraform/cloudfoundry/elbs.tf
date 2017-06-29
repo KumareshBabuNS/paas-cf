@@ -37,7 +37,7 @@ resource "aws_alb_listener_rule" "policy_server" {
 }
 
 resource "aws_alb_target_group" "cloudcontroller" {
-  name     = "cloudcontroller"
+  name     = "${var.env}-cloudcontroller"
   port     = 9022
   protocol = "HTTP"
   vpc_id   = "${var.vpc_id}"
@@ -54,7 +54,7 @@ resource "aws_alb_target_group" "cloudcontroller" {
 }
 
 resource "aws_alb_target_group" "policy_server" {
-  name     = "policy-server"
+  name     = "${var.env}-policy-server"
   port     = 4002
   protocol = "HTTP"
   vpc_id   = "${var.vpc_id}"
