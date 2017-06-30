@@ -438,7 +438,7 @@ properties:
         access-token-validity: 600
         refresh-token-validity: 604800
       network-policy:
-        authorities: uaa.resource,cloud_controller.admin_read_only
+        authorities: uaa.resource,cloud_controller.admin_read_only,network.admin,network.write
         authorized-grant-types: client_credentials,refresh_token
         secret: (( grab secrets.policy_server_uaa_client_secret ))
       notifications:
