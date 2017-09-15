@@ -54,6 +54,9 @@ stemcells:
   - alias: default
     name: bosh-aws-xen-hvm-ubuntu-trusty-go_agent
     version: "3421.20"
+  - alias: uaa
+    name: bosh-aws-xen-hvm-ubuntu-trusty-go_agent
+    version: "3421.19"
 
 update:
   canaries: 0
