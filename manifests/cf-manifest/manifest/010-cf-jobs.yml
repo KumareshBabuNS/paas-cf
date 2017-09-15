@@ -346,7 +346,7 @@ jobs:
         fi
       post_start: |
         #!/bin/bash
-        sleep 60
+        sleep 90
         sudo ln -s /var/vcap/sys/run/nginx/nginx.pid /var/vcap/packages/nginx/logs/nginx.pid
         CONFIG_DIR=/var/vcap/jobs/nginx/etc
         sudo rm -f $CONFIG_DIR/nginx.conf
