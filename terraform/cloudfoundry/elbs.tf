@@ -59,7 +59,7 @@ resource "aws_elb" "cf_uaa" {
   }
 
   health_check {
-    target              = "HTTPS:9443/healthz"
+    target              = "HTTPS:9989/healthz"
     interval            = "${var.health_check_interval}"
     timeout             = "${var.health_check_timeout}"
     healthy_threshold   = "${var.health_check_healthy}"
