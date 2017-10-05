@@ -567,8 +567,7 @@ properties:
         ca_cert: (( grab properties.diego.rep.ca_cert ))
         client_cert: (( grab secrets.rep_client_cert ))
         client_key: (( grab secrets.rep_client_key ))
-        # FIXME: set this to true once certs have been rolled out.
-        require_tls: false
+        require_tls: true
       dropsonde_port: (( grab properties.metron_agent.dropsonde_incoming_port ))
 
     bbs:
@@ -584,8 +583,7 @@ properties:
         ca_cert: (( grab properties.diego.auctioneer.ca_cert ))
         client_cert: (( grab secrets.auctioneer_client_cert ))
         client_key: (( grab secrets.auctioneer_client_key ))
-        # FIXME: set this to true once certs have been rolled out.
-        require_tls: false
+        require_tls: true
       etcd:
         machines: []
         ca_cert: ""
@@ -596,8 +594,7 @@ properties:
         ca_cert: (( grab properties.diego.rep.ca_cert ))
         client_cert: (( grab secrets.rep_client_cert ))
         client_key: (( grab secrets.rep_client_key ))
-        # FIXME: set this to true once certs have been rolled out.
-        require_tls: false
+        require_tls: true
       sql:
         db_username: bbs
         db_password: (( grab secrets.cf_db_bbs_password ))
@@ -624,6 +621,7 @@ properties:
       server_cert: (( grab secrets.rep_server_cert ))
       server_key: (( grab secrets.rep_server_key ))
       require_tls: true
+      enable_legacy_api_endpoints: false
       dropsonde_port: (( grab properties.metron_agent.dropsonde_incoming_port ))
       bbs:
         api_location: (( grab meta.bbs.api_location ))
