@@ -360,6 +360,15 @@ properties:
       public_cert: (( grab secrets.cc_server_cert ))
       private_key: (( grab secrets.cc_server_key ))
 
+    diego:
+      temporary_local_staging: true
+      temporary_local_tasks: true
+      temporary_local_apps: true
+      temporary_local_tps: true
+      temporary_local_sync: true
+      temporary_cc_uploader_mtls: true
+      temporary_droplet_download_mtls: true
+
   ccdb:
     db_scheme: postgres
     address: (( grab terraform_outputs.cf_db_address ))
@@ -707,6 +716,7 @@ properties:
         staging_upload_password: (( grab properties.cc.staging_upload_password ))
 
     tps:
+      listener_enabled: false
       dropsonde_port: (( grab properties.metron_agent.dropsonde_incoming_port ))
       cc:
         base_url: (( grab properties.cc.srv_api_uri ))
